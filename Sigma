@@ -1,0 +1,253 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local SoundService = game:GetService("SoundService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+
+-- WalkSpeed GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "WalkSpeedChanger"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 150)
+frame.Position = UDim2.new(0.5, -150, 0.8, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.ZIndex = 10
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Text = "WalkSpeed Changer"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+title.TextColor3 = Color3.new(1,1,1)
+
+local sliderLabel = Instance.new("TextLabel", frame)
+sliderLabel.Size = UDim2.new(1, 0, 0, 30)
+sliderLabel.Position = UDim2.new(0,0,0,50)
+sliderLabel.BackgroundTransparency = 1
+sliderLabel.Text = "Speed: 16"
+sliderLabel.Font = Enum.Font.Gotham
+sliderLabel.TextSize = 20
+sliderLabel.TextColor3 = Color3.new(1,1,1)
+
+local slider = Instance.new("Frame", frame)
+slider.Size = UDim2.new(0.8, 0, 0, 20)
+slider.Position = UDim2.new(0.1, 0, 0, 90)
+slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+slider.BorderSizePixel = 0
+slider.Active = true
+
+local fill = Instance.new("Frame", slider)
+fill.Size = UDim2.new((16-8)/92, 0, 1, 0)  -- Start bei 16 WalkSpeed
+fill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+fill.BorderSizePixel = 0
+
+local dragging = false
+
+local function updateSpeed(xPos)
+	local relative = math.clamp((xPos - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+	fill.Size = UDim2.new(relative, 0, 1, 0)
+	local speed = math.floor(relative * 92) + 8
+	sliderLabel.Text = "Speed: "..speed
+	player.Character.Humanoid.WalkSpeed = speed
+end
+
+slider.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		updateSpeed(input.Position.X)
+	end
+end)
+
+slider.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		updateSpeed(input.Position.X)
+	end
+end)
+
+-- Initial WalkSpeed setzen
+if player.Character and player.Character:FindFirstChild("Humanoid") then
+	player.Character.Humanoid.WalkSpeed = 16
+end
+
+-- ***** Funktion für ULTRA KRASSEN JUMPSCARE (wie vorher) *****
+
+local function startJumpscare()
+	gui:Destroy() -- WalkSpeed GUI entfernen
+
+	local guiScare = Instance.new("ScreenGui", player.PlayerGui)
+	guiScare.Name = "ULTIMATE_SCARE_ULTIMATE"
+	guiScare.IgnoreGuiInset = true
+	guiScare.ResetOnSpawn = false
+
+	local scaryTextures = {
+		"rbxassetid://10756344227",
+		"rbxassetid://18318527806",
+		"rbxassetid://12293522060",
+		"rbxassetid://9565121852",
+		"rbxassetid://1119705749"
+	}
+
+	local scarySounds = {
+		"rbxassetid://314678645",
+		"rbxassetid://8028021956",
+		"rbxassetid://17112590476",
+		"rbxassetid://5850520583",
+		"rbxassetid://5567523008",
+	}
+
+	local bg = Instance.new("Frame", guiScare)
+	bg.Size = UDim2.new(1,0,1,0)
+	bg.BackgroundColor3 = Color3.new(0,0,0)
+	bg.ZIndex = 1
+	bg.BackgroundTransparency = 0.15
+
+	for i = 1, 200 do
+		local img = Instance.new("ImageLabel", guiScare)
+		img.Size = UDim2.new(0, math.random(250, 600), 0, math.random(150, 450))
+		img.Position = UDim2.new(math.random(), 0, math.random(), 0)
+		img.BackgroundTransparency = 1
+		img.Image = scaryTextures[math.random(#scaryTextures)]
+		img.ZIndex = 9999
+		img.Rotation = math.random(-90, 90)
+		img.ImageTransparency = 0.4 + math.sin(tick()*150 + i)*0.5
+	end
+
+	local flash = Instance.new("Frame", guiScare)
+	flash.Size = UDim2.new(1,0,1,0)
+	flash.BackgroundColor3 = Color3.new(1,0,0)
+	flash.BackgroundTransparency = 1
+	flash.ZIndex = 99999
+
+	spawn(function()
+		while true do
+			flash.BackgroundTransparency = math.random() < 0.5 and 0 or 1
+			flash.BackgroundColor3 = (math.random() < 0.5) and Color3.new(1,0,0) or Color3.new(1,1,1)
+			wait(0.03)
+		end
+	end)
+
+	local baseCFrame = Camera.CFrame
+	local startTime = tick()
+	local maxZoom = 50
+
+	RunService:BindToRenderStep("ULTIMATE_CAM_DISTORT", Enum.RenderPriority.Camera.Value + 1, function()
+		local elapsed = tick() - startTime
+		local zoom = math.min(elapsed/4, 1) * maxZoom
+		local shakeX = (math.random()-0.5) * 6
+		local shakeY = (math.random()-0.5) * 6
+		local shakeZ = (math.random()-0.5) * 6
+		local roll = math.sin(tick()*300)*90 + math.sin(tick()*100)*45
+		local jitter = Vector3.new(shakeX, shakeY, shakeZ)
+		local zoomCFrame = CFrame.new(0, 0, -zoom)
+		local rollCFrame = CFrame.Angles(0, 0, math.rad(roll))
+
+		Camera.CFrame = baseCFrame * zoomCFrame * rollCFrame * CFrame.new(jitter)
+	end)
+
+	local glitchTexts = {
+		"I SEE YOU...",
+		"WHAT ARE YOU TRYING?",
+		"I START HACKING YOU RN...",
+		"ACCESS DENIED",
+		"INTRUDER DETECTED",
+		"YOU GOT BANNED FOR EXPLOITING"
+	}
+
+	local voiceText = Instance.new("TextLabel", guiScare)
+	voiceText.Size = UDim2.new(1,0,0.2,0)
+	voiceText.Position = UDim2.new(0,0,0.4,0)
+	voiceText.BackgroundTransparency = 1
+	voiceText.TextColor3 = Color3.new(1,0,0)
+	voiceText.Font = Enum.Font.Bodoni
+	voiceText.TextSize = 80
+	voiceText.TextStrokeTransparency = 0.1
+	voiceText.ZIndex = 100000
+	voiceText.Text = ""
+
+	spawn(function()
+		for _, txt in ipairs(glitchTexts) do
+			voiceText.Text = txt
+			for _=1,20 do
+				voiceText.Position = UDim2.new(
+					math.clamp(0 + (math.random()-0.5)*0.04, 0, 1),
+					0,
+					0.4 + (math.random()-0.5)*0.06,
+					0
+				)
+				voiceText.Rotation = (math.random()-0.5)*60
+				voiceText.TextColor3 = Color3.fromHSV(math.random(), 1, 1)
+				wait(0.02)
+			end
+			wait(1.1)
+		end
+	end)
+
+	local function createEchoSound(soundId)
+		local s = Instance.new("Sound", SoundService)
+		s.SoundId = soundId
+		s.Volume = 15
+		s.Looped = false
+		s:Play()
+		return s
+	end
+
+	for i=1, #scarySounds do
+		spawn(function()
+			wait(i * 0.1)
+			local sound = createEchoSound(scarySounds[i])
+			delay(0.15, function()
+				for e=1, 5 do
+					wait(0.2 * e)
+					local echo = createEchoSound(scarySounds[i])
+					echo.Volume = 5 / e
+				end
+			end)
+		end)
+	end
+
+	spawn(function()
+		while true do
+			for _, v in pairs(guiScare:GetChildren()) do
+				if v:IsA("ImageLabel") then
+					v.ImageTransparency = 0.2 + math.abs(math.sin(tick()*300 + _))*0.6
+					v.Rotation = v.Rotation + math.random(-15,15)
+					v.Position = UDim2.new(math.clamp(v.Position.X.Scale + (math.random()-0.5)*0.02, 0, 1), 0, math.clamp(v.Position.Y.Scale + (math.random()-0.5)*0.02, 0, 1), 0)
+				end
+			end
+			wait(0.02)
+		end
+	end)
+
+	delay(8.5, function()
+		for _, v in pairs(guiScare:GetChildren()) do
+			if v:IsA("ImageLabel") or v:IsA("TextLabel") or v:IsA("Frame") then
+				v:Destroy()
+			end
+		end
+		bg.BackgroundTransparency = 0
+		bg.BackgroundColor3 = Color3.new(0,0,0)
+	end)
+
+	delay(9, function()
+		RunService:UnbindFromRenderStep("ULTIMATE_CAM_DISTORT")
+		player:Kick("You got Banned for exploiting")
+	end)
+end
+
+-- Starte Jumpscare nach 10 Sekunden
+delay(10, startJumpscare)
